@@ -5,6 +5,7 @@ import pygame
 # local imports
 from color import BLACK
 from managers import Game_Manager
+from entities import Player
 
 pygame.init()
 
@@ -14,6 +15,25 @@ info_object = pygame.display.Info()
 screen = pygame.display.set_mode((0.9 * info_object.current_w, 0.9 * info_object.current_h))
 Game_Manager.update_screen_size()
 
+player1 = Player(
+    0.05 * Game_Manager.screen_width, 
+    0.5 * Game_Manager.screen_height, {
+    "UP_MOVEMENT":pygame.K_w,
+    "DOWN_MOVEMENT":pygame.K_s,
+    "UP_GUN":pygame.K_a,
+    "DOWN_GUN":pygame.K_d,
+    "SHOOT":pygame.K_SPACE
+})
+
+player2 = Player(
+    0.95 * Game_Manager.screen_width, 
+    0.5 * Game_Manager.screen_height, {
+    "UP_MOVEMENT":pygame.K_UP,
+    "DOWN_MOVEMENT":pygame.K_DOWN,
+    "UP_GUN":pygame.K_LEFT,
+    "DOWN_GUN":pygame.K_RIGHT,
+    "SHOOT":pygame.K_RETURN
+})
 
 # game loop
 game_loop = True
@@ -30,10 +50,9 @@ while game_loop:
         for event_func in Game_Manager.event:
             event_func(event)
 
-    for draw in Game_Manager.draw[0]:
-        draw(screen)
-    for draw in Game_Manager.draw[1]:
-        draw(screen)
+    for layer in Game_Manager.draw:
+        for draw in layer:
+            draw(screen)
 
     for process in Game_Manager.process:
         process()

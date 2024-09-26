@@ -3,7 +3,7 @@ import pygame
 
 
 # local imports
-from color import BLACK
+from color import BLACK, WHITE, BLUE
 from managers import Game_Manager
 from entities import Player
 
@@ -20,20 +20,26 @@ player1 = Player(
     0.5 * Game_Manager.screen_height, {
     "UP_MOVEMENT":pygame.K_w,
     "DOWN_MOVEMENT":pygame.K_s,
-    "UP_GUN":pygame.K_a,
-    "DOWN_GUN":pygame.K_d,
-    "SHOOT":pygame.K_SPACE
-})
+    "LEFT_MOVEMENT":pygame.K_a,
+    "RIGHT_MOVEMENT":pygame.K_d,
+    "UP_GUN":pygame.K_c,
+    "DOWN_GUN":pygame.K_v,
+    "SHOOT":pygame.K_b
+    },
+    WHITE)
 
 player2 = Player(
     0.95 * Game_Manager.screen_width, 
     0.5 * Game_Manager.screen_height, {
     "UP_MOVEMENT":pygame.K_UP,
     "DOWN_MOVEMENT":pygame.K_DOWN,
-    "UP_GUN":pygame.K_LEFT,
-    "DOWN_GUN":pygame.K_RIGHT,
-    "SHOOT":pygame.K_RETURN
-})
+    "LEFT_MOVEMENT":pygame.K_LEFT,
+    "RIGHT_MOVEMENT":pygame.K_RIGHT,
+    "UP_GUN":pygame.K_i,
+    "DOWN_GUN":pygame.K_o,
+    "SHOOT":pygame.K_p
+    },
+    BLUE)
 
 # game loop
 game_loop = True

@@ -1,5 +1,5 @@
 from managers import Game_Manager
-from color import WHITE
+
 
 import pygame
 
@@ -45,11 +45,13 @@ class Player(Base):
         DOWN_GUN - Gun downward movement button
         SHOOT - Shooting button
     '''
-    def __init__(self, x, y, controls_dict: dict):
+    def __init__(self, x, y, controls_dict: dict, color):
         super().__init__(layer = 1)
         self.controls = controls_dict
+        self.color = color
 
         self.size = 0.05 * Game_Manager.screen_height
+        self.speed = 0.01 * Game_Manager.screen_height
 
         self.rect = pygame.rect.Rect(
             x - self.size/2,
@@ -60,6 +62,8 @@ class Player(Base):
 
         self.moving_up = False
         self.moving_down = False
+        self.moving_left = False
+        self.moving_right = False
         self.aiming_up = False
         self.aiming_down = False
         self.shoot = False
@@ -70,6 +74,10 @@ class Player(Base):
                 self.moving_up = True
             if event.key == self.controls["DOWN_MOVEMENT"]:
                 self.moving_down = True
+            if event.key == self.controls["LEFT_MOVEMENT"]:
+                self.moving_left = True
+            if event.key == self.controls["RIGHT_MOVEMENT"]:
+                self.moving_right = True
             if event.key == self.controls["UP_GUN"]:
                 self.aiming_up = True
             if event.key == self.controls["DOWN_GUN"]:
@@ -81,6 +89,10 @@ class Player(Base):
                 self.moving_up = False
             if event.key == self.controls["DOWN_MOVEMENT"]:
                 self.moving_down = False
+            if event.key == self.controls["LEFT_MOVEMENT"]:
+                self.moving_left = False
+            if event.key == self.controls["RIGHT_MOVEMENT"]:
+                self.moving_right = False
             if event.key == self.controls["UP_GUN"]:
                 self.aiming_up = False
             if event.key == self.controls["DOWN_GUN"]:
@@ -89,17 +101,26 @@ class Player(Base):
                 self.shoot = False
 
     def process(self):
+        # Movement Code
         if self.moving_up and not self.moving_down:
-            self.rect.y -= 10
+            self.rect.y -= self.speed
             if self.rect.y <= 0:
                 self.rect.y = 0
         if self.moving_down and not self.moving_up:
-            self.rect.y += 10
+            self.rect.y += self.speed
             if self.rect.bottom >= Game_Manager.screen_height:
                 self.rect.bottom = Game_Manager.screen_height
+        if self.moving_left and not self.moving_right:
+            self.rect.x -= self.speed
+            if self.rect.x <= 0:
+                self.rect.x = 0
+        if self.moving_right and not self.moving_left:
+            self.rect.x += self.speed
+            if self.rect.right >= Game_Manager.screen_width:
+                self.rect.right = Game_Manager.screen_width
 
     def draw(self, screen):
-        pygame.draw.rect(surface = screen,color = WHITE,rect = self.rect)
+        pygame.draw.rect(surface = screen,color = self.color,rect = self.rect)
 
 
 class Bomb(Base):

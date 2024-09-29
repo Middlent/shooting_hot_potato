@@ -37,6 +37,9 @@ class Game_Manager():
     draw = [[],[],[]] # the draw function have 2 layers, the thing on the botton have to be in layer 0, the things on top on layer 1
     event = []
     
+    bomb = None
+    player_1 = None
+    player_2 = None
 
     def start_game():
         '''Run the game'''
@@ -49,3 +52,9 @@ class Game_Manager():
         info = pygame.display.Info()
         Game_Manager.screen_width = info.current_w
         Game_Manager.screen_height = info.current_h
+
+    def reset_players_pos():
+        Game_Manager.player_1.rect.x = Game_Manager.player_1.spawn_x
+        Game_Manager.player_1.rect.y = Game_Manager.player_1.spawn_y
+        Game_Manager.player_2.rect.x = Game_Manager.player_2.spawn_x
+        Game_Manager.player_2.rect.y = Game_Manager.player_2.spawn_y

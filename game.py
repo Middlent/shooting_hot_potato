@@ -5,7 +5,7 @@ import pygame
 # local imports
 from color import BLACK, WHITE, BLUE
 from managers import Game_Manager
-from entities import Player
+from entities import Player,Bomb
 
 pygame.init()
 
@@ -15,7 +15,7 @@ info_object = pygame.display.Info()
 screen = pygame.display.set_mode((0.9 * info_object.current_w, 0.9 * info_object.current_h))
 Game_Manager.update_screen_size()
 
-player1 = Player(
+Game_Manager.player_1 = Player(
     0.05 * Game_Manager.screen_width, 
     0.5 * Game_Manager.screen_height, {
     "UP_MOVEMENT":pygame.K_w,
@@ -28,7 +28,7 @@ player1 = Player(
     },
     WHITE)
 
-player2 = Player(
+Game_Manager.player_2 = Player(
     0.95 * Game_Manager.screen_width, 
     0.5 * Game_Manager.screen_height, {
     "UP_MOVEMENT":pygame.K_UP,
@@ -40,6 +40,8 @@ player2 = Player(
     "SHOOT":pygame.K_p
     },
     BLUE)
+
+Game_Manager.bomb = Bomb()
 
 # game loop
 game_loop = True

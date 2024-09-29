@@ -1,7 +1,10 @@
 from managers import Game_Manager
-
+from color import RED
 
 import pygame
+import math
+import random
+import numpy
 
 class Base():
     def __init__(self, layer):
@@ -45,17 +48,21 @@ class Player(Base):
         DOWN_GUN - Gun downward movement button
         SHOOT - Shooting button
     '''
-    def __init__(self, x, y, controls_dict: dict, color):
+    def __init__(self, x, y, controls_dict: dict, color, life = 3):
         super().__init__(layer = 1)
         self.controls = controls_dict
         self.color = color
+        self.life = life
 
         self.size = 0.05 * Game_Manager.screen_height
         self.speed = 0.01 * Game_Manager.screen_height
 
+        self.spawn_x = x - self.size/2
+        self.spawn_y = y - self.size/2
+
         self.rect = pygame.rect.Rect(
-            x - self.size/2,
-            y - self.size/2,
+            self.spawn_x,
+            self.spawn_y,
             self.size,
             self.size,
         )
@@ -67,7 +74,7 @@ class Player(Base):
         self.aiming_up = False
         self.aiming_down = False
         self.shoot = False
-    
+
     def event(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == self.controls["UP_MOVEMENT"]:
@@ -119,13 +126,84 @@ class Player(Base):
             if self.rect.right >= Game_Manager.screen_width:
                 self.rect.right = Game_Manager.screen_width
 
+        if self.rect.colliderect(Game_Manager.bomb.rect):
+            self.life -= 1
+            Game_Manager.bomb.destroy()
+            if self.life == 0:
+                self.destroy()
+            else:
+                Game_Manager.bomb = Bomb()
+                Game_Manager.reset_players_pos()
+
+
     def draw(self, screen):
         pygame.draw.rect(surface = screen,color = self.color,rect = self.rect)
 
 
 class Bomb(Base):
+    COLLISION_MODE_SIDES = 0
+    COLLISION_MODE_UPDOWN = 1
+    
     def __init__(self):
         super().__init__(layer = 1)
+
+        self.size = 0.1 * Game_Manager.screen_height
+        self.rect = pygame.rect.Rect(0.5 * Game_Manager.screen_width,
+                            0.5 * Game_Manager.screen_height, 
+                            self.size, 
+                            self.size)
+        
+
+        self.speed = 0.003 * Game_Manager.screen_height
+        self.quadrant = random.randint(0,1)
+        self.angle = self.quadrant * 90 + random.randint(30,60)
+
+        self.speed_h = 0
+        self.speed_v = 0
+
+        self.returning = False
+
+
+    def process(self):
+        self.speed_v = math.sin(math.radians(self.angle)) * self.speed
+        self.speed_h = math.cos(math.radians(self.angle)) * self.speed
+
+        self.rect.y += self.speed_v
+        self.rect.x += self.speed_h
+
+        if not (0 < self.rect.y < Game_Manager.screen_height - self.size):
+            if 0 > self.rect.y:
+                self.rect.y = 0
+            if self.rect.y > Game_Manager.screen_height - self.size:
+                self.rect.y = Game_Manager.screen_height - self.size
+            self.bounce(Bomb.COLLISION_MODE_UPDOWN)
+        elif not (0 < self.rect.x < Game_Manager.screen_width - self.size):
+            if 0 > self.rect.x:
+                self.rect.x = 0
+            if self.rect.x > Game_Manager.screen_width - self.size:
+                self.rect.x = Game_Manager.screen_width - self.size
+            self.bounce(Bomb.COLLISION_MODE_SIDES)
+        
+
+    
+    def bounce(self, collision_mode):
+        print("oldq",self.quadrant)
+        print("v",self.speed_v)
+        print("h",self.speed_h)
+        
+        
+        if collision_mode == Bomb.COLLISION_MODE_SIDES:
+            self.quadrant = (self.quadrant + (numpy.sign(self.speed_v) * numpy.sign(self.speed_h))) % 4
+        elif collision_mode == Bomb.COLLISION_MODE_UPDOWN:
+            self.quadrant = (self.quadrant - (numpy.sign(self.speed_v) * numpy.sign(self.speed_h))) % 4
+        self.angle = self.quadrant * 90 + random.randint(30,60)
+        
+        self.speed += 0.0001 * Game_Manager.screen_height
+        print("newq",self.quadrant)
+                
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, RED, self.rect)
 
 
 class Walls(Base):

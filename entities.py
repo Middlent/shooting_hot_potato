@@ -1,5 +1,5 @@
 from managers import Game_Manager
-from color import RED
+from color import RED, WHITE, BLACK
 
 import pygame
 import math
@@ -52,7 +52,10 @@ class Player(Base):
         super().__init__(layer = 1)
         self.controls = controls_dict
         self.color = color
+
         self.life = life
+        self.lives_text = Lives_Text(x, 0.1 * Game_Manager.screen_height )
+        self.lives_text.update_text(str(self.life))
 
         self.size = 0.05 * Game_Manager.screen_height
         self.speed = 0.01 * Game_Manager.screen_height
@@ -128,6 +131,7 @@ class Player(Base):
 
         if self.rect.colliderect(Game_Manager.bomb.rect):
             self.life -= 1
+            self.lives_text.update_text(str(self.life))
             Game_Manager.bomb.destroy()
             if self.life == 0:
                 self.destroy()
@@ -154,7 +158,7 @@ class Bomb(Base):
                             self.size)
         
 
-        self.speed = 0.003 * Game_Manager.screen_height
+        self.speed = 0.006 * Game_Manager.screen_height
         self.quadrant = random.randint(0,1)
         self.angle = self.quadrant * 90 + random.randint(30,60)
 
@@ -187,10 +191,6 @@ class Bomb(Base):
 
     
     def bounce(self, collision_mode):
-        print("oldq",self.quadrant)
-        print("v",self.speed_v)
-        print("h",self.speed_h)
-        
         
         if collision_mode == Bomb.COLLISION_MODE_SIDES:
             self.quadrant = (self.quadrant + (numpy.sign(self.speed_v) * numpy.sign(self.speed_h))) % 4
@@ -199,7 +199,6 @@ class Bomb(Base):
         self.angle = self.quadrant * 90 + random.randint(30,60)
         
         self.speed += 0.0001 * Game_Manager.screen_height
-        print("newq",self.quadrant)
                 
 
     def draw(self, screen):
@@ -217,6 +216,18 @@ class Bullet(Base):
 
 
 class Lives_Text(Base):
-    def __init__(self):
-        super().__init__(layer = 2)
+    def __init__(self, x, y):
+        super().__init__(layer = 0)
+        self.font = pygame.font.Font('assets/PressStart2P.ttf', 44)
 
+        self.x = x
+        self.y = y
+
+    def update_text(self, new_text):
+        self.text = self.font.render(new_text, True, WHITE, BLACK)
+        self.text_rect = self.text.get_rect()
+        self.text_rect.center = (self.x, self.y)
+
+    def draw(self, screen):
+        screen.blit(self.text, self.text_rect)       
+    

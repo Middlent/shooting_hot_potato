@@ -5,7 +5,7 @@ import pygame
 # local imports
 from color import BLACK, WHITE, BLUE
 from managers import Game_Manager
-from entities import Player,Bomb
+from entities import Player, Bomb, Lives_Text
 
 pygame.init()
 

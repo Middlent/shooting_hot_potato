@@ -54,7 +54,13 @@ class Game_Manager():
         Game_Manager.screen_height = info.current_h
 
     def reset_players_pos():
-        Game_Manager.player_1.rect.x = Game_Manager.player_1.spawn_x
-        Game_Manager.player_1.rect.y = Game_Manager.player_1.spawn_y
-        Game_Manager.player_2.rect.x = Game_Manager.player_2.spawn_x
-        Game_Manager.player_2.rect.y = Game_Manager.player_2.spawn_y
+        Game_Manager.player_1.set_pos((Game_Manager.player_1.spawn_x, Game_Manager.player_1.spawn_y))
+        Game_Manager.player_2.set_pos((Game_Manager.player_2.spawn_x, Game_Manager.player_2.spawn_y))
+
+    def convert_to_relative_height(number):
+        n_per_pixel = number / 1080
+        return n_per_pixel * Game_Manager.screen_height
+    
+    def convert_to_relative_width(number):
+        n_per_pixel = number / 1920
+        return n_per_pixel * Game_Manager.screen_width

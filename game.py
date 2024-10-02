@@ -5,7 +5,7 @@ import pygame
 # local imports
 from color import BLACK, WHITE, BLUE
 from managers import Game_Manager
-from entities import Player, Bomb, Lives_Text
+from entities import Player, Bomb
 
 pygame.init()
 
@@ -26,7 +26,8 @@ Game_Manager.player_1 = Player(
     "DOWN_GUN":pygame.K_v,
     "SHOOT":pygame.K_b
     },
-    WHITE)
+    WHITE,
+    gun_angle = 0)
 
 Game_Manager.player_2 = Player(
     0.95 * Game_Manager.screen_width, 
@@ -39,9 +40,11 @@ Game_Manager.player_2 = Player(
     "DOWN_GUN":pygame.K_o,
     "SHOOT":pygame.K_p
     },
-    BLUE)
+    BLUE, 
+    gun_angle = 180)
 
 Game_Manager.bomb = Bomb()
+
 
 # game loop
 game_loop = True

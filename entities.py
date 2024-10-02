@@ -48,7 +48,7 @@ class Player(Base):
         DOWN_GUN - Gun downward movement button
         SHOOT - Shooting button
     '''
-    def __init__(self, x, y, controls_dict: dict, color, life = 3):
+    def __init__(self, x, y, controls_dict: dict, color, life = 3, gun_angle = 0):
         super().__init__(layer = 1)
         self.controls = controls_dict
         self.color = color
@@ -56,6 +56,7 @@ class Player(Base):
         self.life = life
         self.lives_text = Lives_Text(x, 0.1 * Game_Manager.screen_height )
         self.lives_text.update_text(str(self.life))
+        
 
         self.size = 0.05 * Game_Manager.screen_height
         self.speed = 0.01 * Game_Manager.screen_height
@@ -70,6 +71,12 @@ class Player(Base):
             self.size,
         )
 
+        self.gun = Gun(self.spawn_x + self.size/2,
+                       self.spawn_y + self.size/2,
+                       self.size,
+                       self.size * 3,
+                       gun_angle)
+
         self.moving_up = False
         self.moving_down = False
         self.moving_left = False
@@ -77,6 +84,10 @@ class Player(Base):
         self.aiming_up = False
         self.aiming_down = False
         self.shoot = False
+
+    def destroy(self):
+        super().destroy()
+        self.gun.destroy()
 
     def event(self, event):
         if event.type == pygame.KEYDOWN:
@@ -112,6 +123,7 @@ class Player(Base):
 
     def process(self):
         # Movement Code
+        gun_movement = [self.rect.x, self.rect.y]
         if self.moving_up and not self.moving_down:
             self.rect.y -= self.speed
             if self.rect.y <= 0:
@@ -129,6 +141,16 @@ class Player(Base):
             if self.rect.right >= Game_Manager.screen_width:
                 self.rect.right = Game_Manager.screen_width
 
+        gun_movement[0] = self.rect.x - gun_movement[0]
+        gun_movement[1] = self.rect.y - gun_movement[1]
+
+        self.gun.move(gun_movement)
+
+        if self.aiming_down and not self.aiming_up:
+            self.gun.rotate(Gun.CLOCKWISE)
+        if self.aiming_up and not self.aiming_down:
+            self.gun.rotate(Gun.COUNTER_CLOCKWISE)
+
         if self.rect.colliderect(Game_Manager.bomb.rect):
             self.life -= 1
             self.lives_text.update_text(str(self.life))
@@ -139,6 +161,17 @@ class Player(Base):
                 Game_Manager.bomb = Bomb()
                 Game_Manager.reset_players_pos()
 
+    def set_pos(self, position):
+        gun_movement = [self.rect.x, self.rect.y]
+
+        self.rect.x = position[0]
+        self.rect.y = position[1]
+
+        gun_movement[0] = self.rect.x - gun_movement[0]
+        gun_movement[1] = self.rect.y - gun_movement[1]
+
+        self.gun.move(gun_movement)
+        
 
     def draw(self, screen):
         pygame.draw.rect(surface = screen,color = self.color,rect = self.rect)
@@ -191,7 +224,6 @@ class Bomb(Base):
 
     
     def bounce(self, collision_mode):
-        
         if collision_mode == Bomb.COLLISION_MODE_SIDES:
             self.quadrant = (self.quadrant + (numpy.sign(self.speed_v) * numpy.sign(self.speed_h))) % 4
         elif collision_mode == Bomb.COLLISION_MODE_UPDOWN:
@@ -208,6 +240,53 @@ class Bomb(Base):
 class Walls(Base):
     def __init__(self):
         super().__init__(layer = 1)
+
+class Gun(Base):
+    CLOCKWISE = 1
+    COUNTER_CLOCKWISE = -1
+
+    def __init__(self, x ,y, size, distance, angle):
+        super().__init__(layer = 1)
+
+        self.base_gun = pygame.image.load("assets/placeholders/gun.png")
+        self.gun = self.base_gun
+
+        self.angle = 0
+
+        self.base_x = x# + size
+        self.base_y = y# + size/2
+
+        self.x = x
+        self.y = y 
+
+        self.size = size
+        self.distance = distance
+
+        self.rotate(angle)
+
+    def move(self, movement):
+        self.base_x += movement[0]
+        self.base_y += movement[1]
+
+        self.update_position()
+
+    def rotate(self, direction):
+        self.angle = (self.angle + direction * 5) % 360
+        self.gun = pygame.transform.rotate(self.base_gun, self.angle)
+
+        self.update_position()
+
+    def update_position(self):
+        new_base_x = self.base_x + self.distance * math.cos(math.radians(self.angle))
+        new_base_y = self.base_y - self.distance * math.sin(math.radians(self.angle))
+
+        self.x = new_base_x + self.gun.get_rect().width * ((-math.cos(math.radians(self.angle))/2) -1/2) 
+        self.y = new_base_y + self.gun.get_rect().height * ((math.sin(math.radians(self.angle))/2) -1/2) 
+
+
+
+    def draw(self, screen):
+        screen.blit(self.gun, (self.x, self.y))
 
 
 class Bullet(Base):
@@ -230,4 +309,3 @@ class Lives_Text(Base):
 
     def draw(self, screen):
         screen.blit(self.text, self.text_rect)       
-    

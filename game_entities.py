@@ -1,5 +1,6 @@
-from managers import Game_Manager
+import managers
 from color import RED, WHITE, BLACK
+import screens
 
 import pygame
 import math
@@ -9,17 +10,13 @@ import numpy
 class Base():
     def __init__(self, layer):
         self.layer = layer
-        Game_Manager.draw[self.layer].append(self.draw)
-        Game_Manager.event.append(self.event)
-        Game_Manager.process.append(self.process)
+        managers.Game_Manager.main_screen.add_item(self, layer)
 
     def event(self, event):
         pass
     
     def destroy(self):
-        Game_Manager.draw[self.layer].remove(self.draw)
-        Game_Manager.event.remove(self.event)
-        Game_Manager.process.remove(self.process)
+        managers.Game_Manager.main_screen.remove_item(self, self.layer)
 
     def process(self):
         pass
@@ -48,18 +45,19 @@ class Player(Base):
         DOWN_GUN - Gun downward movement button
         SHOOT - Shooting button
     '''
-    def __init__(self, x, y, controls_dict: dict, color, life = 3, gun_angle = 0):
+    def __init__(self, x, y, controls_dict: dict, color, player_num, life = 3, gun_angle = 0):
         super().__init__(layer = 1)
         self.controls = controls_dict
         self.color = color
+        self.player_num = player_num
 
         self.life = life
-        self.lives_text = Lives_Text(x, 0.1 * Game_Manager.screen_height )
+        self.lives_text = Lives_Text(x, 0.1 * managers.Game_Manager.screen_height )
         self.lives_text.update_text(str(self.life))
         
 
-        self.size = 0.05 * Game_Manager.screen_height
-        self.speed = 0.01 * Game_Manager.screen_height
+        self.size = 0.05 * managers.Game_Manager.screen_height
+        self.speed = 0.01 * managers.Game_Manager.screen_height
 
         self.spawn_x = x - self.size/2
         self.spawn_y = y - self.size/2
@@ -75,7 +73,8 @@ class Player(Base):
                        self.spawn_y + self.size/2,
                        self.size,
                        self.size * 3,
-                       gun_angle)
+                       gun_angle,
+                       player_num)
 
         self.moving_up = False
         self.moving_down = False
@@ -104,7 +103,7 @@ class Player(Base):
             if event.key == self.controls["DOWN_GUN"]:
                 self.aiming_down = True
             if event.key == self.controls["SHOOT"]:
-                self.shoot = True
+                self.gun.shoot()
         if event.type == pygame.KEYUP:
             if event.key == self.controls["UP_MOVEMENT"]:
                 self.moving_up = False
@@ -118,8 +117,7 @@ class Player(Base):
                 self.aiming_up = False
             if event.key == self.controls["DOWN_GUN"]:
                 self.aiming_down = False
-            if event.key == self.controls["SHOOT"]:
-                self.shoot = False
+
 
     def process(self):
         # Movement Code
@@ -130,16 +128,16 @@ class Player(Base):
                 self.rect.y = 0
         if self.moving_down and not self.moving_up:
             self.rect.y += self.speed
-            if self.rect.bottom >= Game_Manager.screen_height:
-                self.rect.bottom = Game_Manager.screen_height
+            if self.rect.bottom >= managers.Game_Manager.screen_height:
+                self.rect.bottom = managers.Game_Manager.screen_height
         if self.moving_left and not self.moving_right:
             self.rect.x -= self.speed
             if self.rect.x <= 0:
                 self.rect.x = 0
         if self.moving_right and not self.moving_left:
             self.rect.x += self.speed
-            if self.rect.right >= Game_Manager.screen_width:
-                self.rect.right = Game_Manager.screen_width
+            if self.rect.right >= managers.Game_Manager.screen_width:
+                self.rect.right = managers.Game_Manager.screen_width
 
         gun_movement[0] = self.rect.x - gun_movement[0]
         gun_movement[1] = self.rect.y - gun_movement[1]
@@ -151,15 +149,19 @@ class Player(Base):
         if self.aiming_up and not self.aiming_down:
             self.gun.rotate(Gun.COUNTER_CLOCKWISE)
 
-        if self.rect.colliderect(Game_Manager.bomb.rect):
+
+        if self.rect.colliderect(managers.Game_Manager.bomb.rect):
             self.life -= 1
             self.lives_text.update_text(str(self.life))
-            Game_Manager.bomb.destroy()
+            managers.Game_Manager.bomb.destroy()
             if self.life == 0:
-                self.destroy()
+                players = [1,2]
+                players.remove(self.player_num + 1)
+                winner = players[0]
+                managers.Game_Manager.game_over(winner)
             else:
-                Game_Manager.bomb = Bomb()
-                Game_Manager.reset_players_pos()
+                managers.Game_Manager.bomb = Bomb()
+                managers.Game_Manager.reset_players_pos()
 
     def set_pos(self, position):
         gun_movement = [self.rect.x, self.rect.y]
@@ -184,14 +186,14 @@ class Bomb(Base):
     def __init__(self):
         super().__init__(layer = 1)
 
-        self.size = 0.1 * Game_Manager.screen_height
-        self.rect = pygame.rect.Rect(0.5 * Game_Manager.screen_width,
-                            0.5 * Game_Manager.screen_height, 
+        self.size = 0.1 * managers.Game_Manager.screen_height
+        self.rect = pygame.rect.Rect(0.5 * managers.Game_Manager.screen_width,
+                            0.5 * managers.Game_Manager.screen_height, 
                             self.size, 
                             self.size)
         
 
-        self.speed = 0.006 * Game_Manager.screen_height
+        self.speed = 0.006 * managers.Game_Manager.screen_height
         self.quadrant = random.randint(0,1)
         self.angle = self.quadrant * 90 + random.randint(30,60)
 
@@ -208,20 +210,21 @@ class Bomb(Base):
         self.rect.y += self.speed_v
         self.rect.x += self.speed_h
 
-        if not (0 < self.rect.y < Game_Manager.screen_height - self.size):
+        if not (0 < self.rect.y < managers.Game_Manager.screen_height - self.size):
             if 0 > self.rect.y:
                 self.rect.y = 0
-            if self.rect.y > Game_Manager.screen_height - self.size:
-                self.rect.y = Game_Manager.screen_height - self.size
+            if self.rect.y > managers.Game_Manager.screen_height - self.size:
+                self.rect.y = managers.Game_Manager.screen_height - self.size
             self.bounce(Bomb.COLLISION_MODE_UPDOWN)
-        elif not (0 < self.rect.x < Game_Manager.screen_width - self.size):
+        elif not (0 < self.rect.x < managers.Game_Manager.screen_width - self.size):
             if 0 > self.rect.x:
                 self.rect.x = 0
-            if self.rect.x > Game_Manager.screen_width - self.size:
-                self.rect.x = Game_Manager.screen_width - self.size
+            if self.rect.x > managers.Game_Manager.screen_width - self.size:
+                self.rect.x = managers.Game_Manager.screen_width - self.size
             self.bounce(Bomb.COLLISION_MODE_SIDES)
         
-
+    def charge(self):
+        self.speed += 0.001 * managers.Game_Manager.screen_height
     
     def bounce(self, collision_mode):
         if collision_mode == Bomb.COLLISION_MODE_SIDES:
@@ -230,7 +233,7 @@ class Bomb(Base):
             self.quadrant = (self.quadrant - (numpy.sign(self.speed_v) * numpy.sign(self.speed_h))) % 4
         self.angle = self.quadrant * 90 + random.randint(30,60)
         
-        self.speed += 0.0001 * Game_Manager.screen_height
+        self.speed += 0.0001 * managers.Game_Manager.screen_height
                 
 
     def draw(self, screen):
@@ -245,22 +248,26 @@ class Gun(Base):
     CLOCKWISE = 1
     COUNTER_CLOCKWISE = -1
 
-    def __init__(self, x ,y, size, distance, angle):
+    def __init__(self, x ,y, size, distance, angle, player_num):
         super().__init__(layer = 1)
+        self.player_num = player_num
 
         self.base_gun = pygame.image.load("assets/placeholders/gun.png")
         self.gun = self.base_gun
 
         self.angle = 0
 
-        self.base_x = x# + size
-        self.base_y = y# + size/2
+        self.base_x = x
+        self.base_y = y
 
         self.x = x
         self.y = y 
 
         self.size = size
         self.distance = distance
+
+        self.point_x = self.base_x + self.distance * math.cos(math.radians(self.angle))
+        self.point_y = self.base_y - self.distance * math.sin(math.radians(self.angle))
 
         self.rotate(angle)
 
@@ -277,21 +284,61 @@ class Gun(Base):
         self.update_position()
 
     def update_position(self):
-        new_base_x = self.base_x + self.distance * math.cos(math.radians(self.angle))
-        new_base_y = self.base_y - self.distance * math.sin(math.radians(self.angle))
+        self.point_x = self.base_x + self.distance * math.cos(math.radians(self.angle))
+        self.point_y = self.base_y - self.distance * math.sin(math.radians(self.angle))
 
-        self.x = new_base_x + self.gun.get_rect().width * ((-math.cos(math.radians(self.angle))/2) -1/2) 
-        self.y = new_base_y + self.gun.get_rect().height * ((math.sin(math.radians(self.angle))/2) -1/2) 
+        self.x = self.point_x + self.gun.get_rect().width * ((-math.cos(math.radians(self.angle))/2) -1/2) 
+        self.y = self.point_y + self.gun.get_rect().height * ((math.sin(math.radians(self.angle))/2) -1/2) 
 
-
+    def shoot(self):
+        managers.Game_Manager.bullets[self.player_num].append(Bullet(self.angle, self.point_x, self.point_y, self.player_num))
 
     def draw(self, screen):
         screen.blit(self.gun, (self.x, self.y))
 
 
 class Bullet(Base):
-    def __init__(self):
+    def __init__(self, angle, x, y, player_num):
         super().__init__(layer = 1)
+        self.player_num = player_num
+
+        self.bullet = pygame.image.load("assets/placeholders/bullet.png")
+
+        self.collision_rect = pygame.rect.Rect(x, y, self.bullet.get_rect().width, self.bullet.get_rect().height)
+
+        self.angle = angle
+
+        pygame.transform.rotate(self.bullet,self.angle)
+
+        self.x = x
+        self.y = y 
+
+        self.size = 0.01 * managers.Game_Manager.screen_height
+        self.speed = 0.02 * managers.Game_Manager.screen_height
+
+    def destroy(self):
+        super().destroy()
+        managers.Game_Manager.bullets[self.player_num].remove(self)
+
+    def process(self):
+        self.x += math.cos(math.radians(self.angle)) * self.speed
+        self.y -= math.sin(math.radians(self.angle)) * self.speed
+        
+        self.collision_rect.x = self.x
+        self.collision_rect.y = self.y
+        
+        if 0 > self.x > managers.Game_Manager.screen_width:
+            self.destroy()
+        if 0 > self.y > managers.Game_Manager.screen_height:
+            self.destroy()
+
+        if self.collision_rect.colliderect(managers.Game_Manager.bomb.rect):
+            self.destroy()
+            managers.Game_Manager.bomb.charge()
+
+    def draw(self, screen):
+        screen.blit(self.bullet, (self.x, self.y))
+
 
 
 class Lives_Text(Base):
@@ -309,3 +356,43 @@ class Lives_Text(Base):
 
     def draw(self, screen):
         screen.blit(self.text, self.text_rect)       
+
+class Start_Text(Base):
+    def __init__(self):
+        super().__init__(layer = 0)
+        self.font = pygame.font.Font('assets/PressStart2P.ttf', 55)
+
+        self.x = managers.Game_Manager.screen_width * 0.5
+        self.y = managers.Game_Manager.screen_height * 0.8
+
+        self.text = self.font.render("Press Space to Start Game", True, WHITE, BLACK)
+        self.text_rect = self.text.get_rect()
+        self.text_rect.center = (self.x, self.y)
+
+    def event(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                managers.Game_Manager.start_game()
+
+    def draw(self, screen):
+        screen.blit(self.text, self.text_rect)    
+
+class Win_Text(Base):
+    def __init__(self, winner):
+        super().__init__(layer = 0)
+        self.font = pygame.font.Font('assets/PressStart2P.ttf', 55)
+
+        self.x = managers.Game_Manager.screen_width * 0.5
+        self.y = managers.Game_Manager.screen_height * 0.5
+
+        self.text = self.font.render("Jogador "+str(winner)+" Venceu", True, WHITE, BLACK)
+        self.text_rect = self.text.get_rect()
+        self.text_rect.center = (self.x, self.y)
+
+    def event(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                managers.Game_Manager.change_screen(screens.Start_Screen())
+
+    def draw(self, screen):
+        screen.blit(self.text, self.text_rect)    

@@ -1,5 +1,7 @@
 import pygame
 
+import screens
+
 class Game_Manager():
     '''
     Class that manage everything that happens in game scope
@@ -33,18 +35,31 @@ class Game_Manager():
     screen_width = 0
     screen_height = 0
 
-    process = []
-    draw = [[],[],[]] # the draw function have 2 layers, the thing on the botton have to be in layer 0, the things on top on layer 1
-    event = []
+    start_screen = None
+    game_screen = None
+    ending_screen = None
+
+    main_screen = None
     
     bomb = None
     player_1 = None
     player_2 = None
+    bullets = [[],[]]
+
+    def change_screen(screen):
+        Game_Manager.main_screen = screen
+        Game_Manager.main_screen.populate()
 
     def start_game():
         '''Run the game'''
+        Game_Manager.change_screen(screens.Game_Screen())
         
         Game_Manager.game_started = True
+    
+    def game_over(winner):
+        Game_Manager.main_screen = screens.End_Screen()
+        Game_Manager.main_screen.populate(winner)
+        Game_Manager.game_started = False
 
     def update_screen_size():
         '''Catch the current screen size'''
@@ -64,3 +79,4 @@ class Game_Manager():
     def convert_to_relative_width(number):
         n_per_pixel = number / 1920
         return n_per_pixel * Game_Manager.screen_width
+    

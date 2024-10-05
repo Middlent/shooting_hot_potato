@@ -42,9 +42,9 @@ class Game_Screen(Screen):
             "DOWN_MOVEMENT":pygame.K_s,
             "LEFT_MOVEMENT":pygame.K_a,
             "RIGHT_MOVEMENT":pygame.K_d,
-            "UP_GUN":pygame.K_v,
+            "UP_GUN":pygame.K_b,
             "DOWN_GUN":pygame.K_c,
-            "SHOOT":pygame.K_b
+            "SHOOT":pygame.K_v
             },
             WHITE,
             0,
@@ -57,15 +57,17 @@ class Game_Screen(Screen):
             "DOWN_MOVEMENT":pygame.K_DOWN,
             "LEFT_MOVEMENT":pygame.K_LEFT,
             "RIGHT_MOVEMENT":pygame.K_RIGHT,
-            "UP_GUN":pygame.K_o,
+            "UP_GUN":pygame.K_p,
             "DOWN_GUN":pygame.K_i,
-            "SHOOT":pygame.K_p
+            "SHOOT":pygame.K_o
             },
             BLUE, 
             1,
             gun_angle = 180)
 
         Game_Manager.bomb = ent.Bomb()
+
+        ent.Game_Music()
 
 class End_Screen(Screen):
 
@@ -83,4 +85,5 @@ class Start_Screen(Screen):
 
     def populate(self):
         ent.Start_Text()
+        ent.Start_Music()
         

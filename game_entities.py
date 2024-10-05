@@ -153,6 +153,7 @@ class Player(Base):
         if self.rect.colliderect(managers.Game_Manager.bomb.rect):
             self.life -= 1
             self.lives_text.update_text(str(self.life))
+            pygame.mixer.Channel(2).play(pygame.mixer.Sound('assets\SFX\Explosão.mp3'), maxtime=600)
             managers.Game_Manager.bomb.destroy()
             if self.life == 0:
                 players = [1,2]
@@ -225,6 +226,7 @@ class Bomb(Base):
         
     def charge(self):
         self.speed += 0.001 * managers.Game_Manager.screen_height
+        pygame.mixer.Channel(1).play(pygame.mixer.Sound('assets\SFX\Parede.mp3'), maxtime=600)
     
     def bounce(self, collision_mode):
         if collision_mode == Bomb.COLLISION_MODE_SIDES:
@@ -233,16 +235,13 @@ class Bomb(Base):
             self.quadrant = (self.quadrant - (numpy.sign(self.speed_v) * numpy.sign(self.speed_h))) % 4
         self.angle = self.quadrant * 90 + random.randint(30,60)
         
+        pygame.mixer.Channel(1).play(pygame.mixer.Sound('assets\SFX\Parede.mp3'), maxtime=600)
+
         self.speed += 0.0001 * managers.Game_Manager.screen_height
                 
 
     def draw(self, screen):
         pygame.draw.rect(screen, RED, self.rect)
-
-
-class Walls(Base):
-    def __init__(self):
-        super().__init__(layer = 1)
 
 class Gun(Base):
     CLOCKWISE = 1
@@ -300,6 +299,8 @@ class Gun(Base):
 class Bullet(Base):
     def __init__(self, angle, x, y, player_num):
         super().__init__(layer = 1)
+
+        pygame.mixer.Channel(0).play(pygame.mixer.Sound('assets\SFX\Tiro.mp3'), maxtime=600)
         self.player_num = player_num
 
         self.bullet = pygame.image.load("assets/placeholders/bullet.png")
@@ -376,6 +377,19 @@ class Start_Text(Base):
 
     def draw(self, screen):
         screen.blit(self.text, self.text_rect)    
+
+class Start_Music(Base):
+    def __init__(self):
+        super().__init__(layer = 0)
+        pygame.mixer_music.load('assets\Musica\Menu [START].ogg')
+        pygame.mixer_music.queue('assets\Musica\Menu [LOOP].ogg')
+        pygame.mixer_music.play()
+
+class Game_Music(Base):
+    def __init__(self):
+        super().__init__(layer = 0)
+        pygame.mixer_music.load('assets\Musica\Level [LOOP].ogg')
+        pygame.mixer_music.play()
 
 class Win_Text(Base):
     def __init__(self, winner):

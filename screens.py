@@ -17,9 +17,19 @@ class Screen():
         self.event.append(item.event)
 
     def remove_item(self, item, layer):
-        self.process.remove(item.process)
-        self.draw[layer].remove(item.draw)
-        self.event.remove(item.event)
+        try:
+            self.process.remove(item.process)
+        except:
+            print("Process that is not here tried to me removed")
+        try:
+            self.draw[layer].remove(item.draw)
+        except:
+            print("Draw that is not here tried to me removed")
+        try:
+            self.event.remove(item.event)
+        except:
+            print("Event that is not here tried to me removed")
+
 
     def clear_screen(self):
         self.process.clear()
@@ -35,6 +45,8 @@ class Game_Screen(Screen):
         super().__init__()
     
     def populate(self):
+        ent.Background()
+
         Game_Manager.player_1 = ent.Player(
             0.05 * Game_Manager.screen_width, 
             0.5 * Game_Manager.screen_height, {
@@ -75,6 +87,7 @@ class End_Screen(Screen):
         super().__init__()
 
     def populate(self, winner):
+        ent.Background()
         ent.Win_Text(winner)
 
 

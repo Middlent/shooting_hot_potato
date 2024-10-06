@@ -1,5 +1,5 @@
 import managers
-from color import RED, WHITE, BLACK
+from color import *
 import screens
 
 import pygame
@@ -47,17 +47,23 @@ class Player(Base):
     '''
     def __init__(self, x, y, controls_dict: dict, color, player_num, life = 3, gun_angle = 0):
         super().__init__(layer = 1)
+        
         self.controls = controls_dict
         self.color = color
         self.player_num = player_num
 
         self.life = life
-        self.lives_text = Lives_Text(x, 0.1 * managers.Game_Manager.screen_height )
+        self.lives_text = Lives_Text(x, 0.1 * managers.Game_Manager.screen_height, player_num)
         self.lives_text.update_text(str(self.life))
         
 
         self.size = 0.05 * managers.Game_Manager.screen_height
         self.speed = 0.01 * managers.Game_Manager.screen_height
+
+        if player_num == 0:
+            self.player_image = pygame.image.load("assets\Art\Player_1.png")
+        if player_num == 1:
+            self.player_image = pygame.image.load("assets\Art\Player_2.png")
 
         self.spawn_x = x - self.size/2
         self.spawn_y = y - self.size/2
@@ -72,7 +78,7 @@ class Player(Base):
         self.gun = Gun(self.spawn_x + self.size/2,
                        self.spawn_y + self.size/2,
                        self.size,
-                       self.size * 3,
+                       self.size * 2,
                        gun_angle,
                        player_num)
 
@@ -153,7 +159,7 @@ class Player(Base):
         if self.rect.colliderect(managers.Game_Manager.bomb.rect):
             self.life -= 1
             self.lives_text.update_text(str(self.life))
-            pygame.mixer.Channel(2).play(pygame.mixer.Sound('assets\SFX\Explosão.mp3'), maxtime=600)
+            pygame.mixer.Channel(2).play(pygame.mixer.Sound('assets\SFX\Explosion.mp3'), maxtime=600)
             managers.Game_Manager.bomb.destroy()
             if self.life == 0:
                 players = [1,2]
@@ -176,8 +182,9 @@ class Player(Base):
         self.gun.move(gun_movement)
         
 
-    def draw(self, screen):
-        pygame.draw.rect(surface = screen,color = self.color,rect = self.rect)
+    def draw(self, screen: pygame.Surface):
+        screen.blit(source = self.player_image, 
+                    dest = (self.rect.x, self.rect.y))
 
 
 class Bomb(Base):
@@ -193,6 +200,7 @@ class Bomb(Base):
                             self.size, 
                             self.size)
         
+        self.image = pygame.image.load("assets\Art\Potato.png")
 
         self.speed = 0.006 * managers.Game_Manager.screen_height
         self.quadrant = random.randint(0,1)
@@ -226,7 +234,7 @@ class Bomb(Base):
         
     def charge(self):
         self.speed += 0.001 * managers.Game_Manager.screen_height
-        pygame.mixer.Channel(1).play(pygame.mixer.Sound('assets\SFX\Parede.mp3'), maxtime=600)
+        pygame.mixer.Channel(1).play(pygame.mixer.Sound('assets\SFX\Wall.mp3'), maxtime=600)
     
     def bounce(self, collision_mode):
         if collision_mode == Bomb.COLLISION_MODE_SIDES:
@@ -235,13 +243,13 @@ class Bomb(Base):
             self.quadrant = (self.quadrant - (numpy.sign(self.speed_v) * numpy.sign(self.speed_h))) % 4
         self.angle = self.quadrant * 90 + random.randint(30,60)
         
-        pygame.mixer.Channel(1).play(pygame.mixer.Sound('assets\SFX\Parede.mp3'), maxtime=600)
+        pygame.mixer.Channel(1).play(pygame.mixer.Sound('assets\SFX\Wall.mp3'), maxtime=600)
 
         self.speed += 0.0001 * managers.Game_Manager.screen_height
                 
 
     def draw(self, screen):
-        pygame.draw.rect(screen, RED, self.rect)
+        screen.blit(self.image, (self.rect.x, self.rect.y))
 
 class Gun(Base):
     CLOCKWISE = 1
@@ -251,7 +259,7 @@ class Gun(Base):
         super().__init__(layer = 1)
         self.player_num = player_num
 
-        self.base_gun = pygame.image.load("assets/placeholders/gun.png")
+        self.base_gun = pygame.image.load("assets\Art\Gun.png")
         self.gun = self.base_gun
 
         self.angle = 0
@@ -300,7 +308,7 @@ class Bullet(Base):
     def __init__(self, angle, x, y, player_num):
         super().__init__(layer = 1)
 
-        pygame.mixer.Channel(0).play(pygame.mixer.Sound('assets\SFX\Tiro.mp3'), maxtime=600)
+        pygame.mixer.Channel(0).play(pygame.mixer.Sound('assets\SFX\Shoot.mp3'), maxtime=600)
         self.player_num = player_num
 
         self.bullet = pygame.image.load("assets/placeholders/bullet.png")
@@ -342,33 +350,94 @@ class Bullet(Base):
 
 
 
+class Background(Base):
+    def __init__(self):
+        super().__init__(layer = 0)
+        self.image = pygame.image.load("assets\Art\BG.png")
+        self.image = pygame.transform.scale(self.image, (managers.Game_Manager.screen_width, managers.Game_Manager.screen_height))
+
+    def draw(self, screen):
+        screen.blit(self.image, (0,0))    
+
 class Lives_Text(Base):
-    def __init__(self, x, y):
+    def __init__(self, x, y, player_num):
         super().__init__(layer = 0)
         self.font = pygame.font.Font('assets/PressStart2P.ttf', 44)
+        self.small_font = pygame.font.Font('assets/PressStart2P.ttf', 33)
 
         self.x = x
         self.y = y
 
+        if player_num == 0:
+            self.move = self.small_font.render("W,A,S,D to move", True, BLACK)
+            self.move_rect = self.move.get_rect()
+            self.move_rect.topleft = (self.x, managers.Game_Manager.screen_height * 0.85)
+            
+            self.aim = self.small_font.render("C and B to aim", True, BLACK)
+            self.aim_rect = self.aim.get_rect()
+            self.aim_rect.topleft = (self.x, managers.Game_Manager.screen_height * 0.90)
+
+            self.shoot = self.small_font.render("V to shoot", True, BLACK)
+            self.shoot_rect = self.shoot.get_rect()
+            self.shoot_rect.topleft = (self.x, managers.Game_Manager.screen_height * 0.95)
+
+        if player_num == 1:
+            self.move = self.small_font.render("Arrows to move", True, BLACK)
+            self.move_rect = self.move.get_rect()
+            self.move_rect.topright = (self.x, managers.Game_Manager.screen_height * 0.85)
+            
+            self.aim = self.small_font.render("I and P to aim", True, BLACK)
+            self.aim_rect = self.aim.get_rect()
+            self.aim_rect.topright = (self.x, managers.Game_Manager.screen_height * 0.90)
+
+            self.shoot = self.small_font.render("O to shoot", True, BLACK)
+            self.shoot_rect = self.shoot.get_rect()
+            self.shoot_rect.topright = (self.x, managers.Game_Manager.screen_height * 0.95)
+
     def update_text(self, new_text):
-        self.text = self.font.render(new_text, True, WHITE, BLACK)
+        self.text = self.font.render(new_text, True, BLACK)
         self.text_rect = self.text.get_rect()
         self.text_rect.center = (self.x, self.y)
 
     def draw(self, screen):
-        screen.blit(self.text, self.text_rect)       
+        screen.blit(self.text, self.text_rect)  
+        screen.blit(self.move, self.move_rect)    
+        screen.blit(self.aim, self.aim_rect)   
+        screen.blit(self.shoot, self.shoot_rect)       
 
 class Start_Text(Base):
     def __init__(self):
         super().__init__(layer = 0)
+        self.image = pygame.image.load("assets\Art\Start.png")
+        self.image = pygame.transform.scale(self.image, (managers.Game_Manager.screen_width, managers.Game_Manager.screen_height))
         self.font = pygame.font.Font('assets/PressStart2P.ttf', 55)
 
-        self.x = managers.Game_Manager.screen_width * 0.5
-        self.y = managers.Game_Manager.screen_height * 0.8
+        self.target_x = managers.Game_Manager.screen_width * 0.5
+        self.target_y = managers.Game_Manager.screen_height * 0.05
 
-        self.text = self.font.render("Press Space to Start Game", True, WHITE, BLACK)
+        self.title_x = self.target_x
+        self.title_y = self.target_y
+
+        self.x = managers.Game_Manager.screen_width * 0.5
+        self.y = managers.Game_Manager.screen_height * 0.85
+
+        self.title = self.font.render("SHOOTING HOT POTATO!!", True, POTATO)
+        self.title_rect = self.title.get_rect()
+        self.title_rect.center = (self.title_x, self.title_y)
+
+        self.text = self.font.render("Press Space to Start Game", True, BLACK)
         self.text_rect = self.text.get_rect()
         self.text_rect.center = (self.x, self.y)
+
+    def process(self):
+        if int(self.title_rect.centerx) == int(self.target_x):
+            self.target_x = random.randint(int(managers.Game_Manager.screen_width * 0.47), int(managers.Game_Manager.screen_width * 0.53))
+        else:
+            self.title_rect.centerx -= numpy.sign(self.title_rect.centerx - self.target_x)
+        if int(self.title_rect.centery) == int(self.target_y):
+            self.target_y = random.randint(int(managers.Game_Manager.screen_height * 0.05), int(managers.Game_Manager.screen_height * 0.15))
+        else:
+            self.title_rect.centery -= numpy.sign(self.title_rect.centery - self.target_y)
 
     def event(self, event):
         if event.type == pygame.KEYDOWN:
@@ -376,7 +445,9 @@ class Start_Text(Base):
                 managers.Game_Manager.start_game()
 
     def draw(self, screen):
+        screen.blit(self.image, (0,0))
         screen.blit(self.text, self.text_rect)    
+        screen.blit(self.title, self.title_rect)    
 
 class Start_Music(Base):
     def __init__(self):
@@ -396,10 +467,12 @@ class Win_Text(Base):
         super().__init__(layer = 0)
         self.font = pygame.font.Font('assets/PressStart2P.ttf', 55)
 
-        self.x = managers.Game_Manager.screen_width * 0.5
-        self.y = managers.Game_Manager.screen_height * 0.5
+        self.image = pygame.image.load('assets\Art\Win_'+str(winner)+'.png')
 
-        self.text = self.font.render("Jogador "+str(winner)+" Venceu", True, WHITE, BLACK)
+        self.x = managers.Game_Manager.screen_width * 0.5
+        self.y = managers.Game_Manager.screen_height * 0.95
+
+        self.text = self.font.render("Jogador "+str(winner)+" Venceu", True, BLACK)
         self.text_rect = self.text.get_rect()
         self.text_rect.center = (self.x, self.y)
 
@@ -409,4 +482,5 @@ class Win_Text(Base):
                 managers.Game_Manager.change_screen(screens.Start_Screen())
 
     def draw(self, screen):
-        screen.blit(self.text, self.text_rect)    
+        screen.blit(self.image, (0,0))      
+        screen.blit(self.text, self.text_rect)  

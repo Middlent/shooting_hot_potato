@@ -453,14 +453,14 @@ class Start_Music(Base):
     def __init__(self):
         super().__init__(layer = 0)
         pygame.mixer_music.load('assets\Musica\Menu [START].ogg')
-        pygame.mixer_music.queue('assets\Musica\Menu [LOOP].ogg')
+        pygame.mixer_music.queue('assets\Musica\Menu [LOOP].ogg', loops = 999)
         pygame.mixer_music.play()
 
 class Game_Music(Base):
     def __init__(self):
         super().__init__(layer = 0)
         pygame.mixer_music.load('assets\Musica\Level [LOOP].ogg')
-        pygame.mixer_music.play()
+        pygame.mixer_music.play(loops = 999)
 
 class Win_Text(Base):
     def __init__(self, winner):
